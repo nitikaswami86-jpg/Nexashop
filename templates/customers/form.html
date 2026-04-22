@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}{{ action }} Customer — NexaShop{% endblock %}
+{% block content %}
+<div class="page-hdr anim">
+  <div class="d-flex align-items-center gap-3">
+    <a href="{% url 'customer_list' %}" class="ib">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+    <div>
+      <h1 class="page-title">{{ action }} Customer</h1>
+      <p class="page-sub">
+        {% if customer %}Editing {{ customer.name }}{% else %}Register a new customer{% endif %}
+      </p>
+    </div>
+  </div>
+</div>
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card-nx anim">
+      <div class="card-head">
+        <div class="card-title">Customer Information</div>
+      </div>
+      <div style="padding:28px">
+        <form method="post">
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label">Full Name</label>
+              {{ form.name }}
+              {% if form.name.errors %}
+              <div style="font-size:12px;color:var(--pink);margin-top:4px">
+                {{ form.name.errors.0 }}
+              </div>
+              {% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Email</label>{{ form.email }}
+              {% if form.email.errors %}
+              <div style="font-size:12px;color:var(--pink);margin-top:4px">
+                {{ form.email.errors.0 }}
+              </div>
+              {% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Phone</label>{{ form.phone }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">City</label>{{ form.city }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">State</label>{{ form.state }}
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:24px">
+            <button type="submit" class="btn-nx btn-primary-nx">{{ action }} Customer</button>
+            <a href="{% url 'customer_list' %}" class="btn-nx btn-ghost">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

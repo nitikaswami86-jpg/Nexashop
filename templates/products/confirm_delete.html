@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Delete Product{% endblock %}
+{% block content %}
+<div class="row justify-content-center mt-5">
+  <div class="col-md-6">
+    <div class="card-nx anim" style="text-align:center;padding:40px">
+      <div style="font-size:50px;margin-bottom:16px">{{ product.icon }}</div>
+      <h2 style="font-family:Syne,sans-serif;font-weight:800;margin-bottom:8px">Delete Product?</h2>
+      <p style="color:var(--t2);margin-bottom:24px">
+        Delete 
+        <strong style="color:var(--accent)">
+          {{ product.name }}
+        </strong>
+        ? All related orders will be affected.
+      </p>
+      <form method="post" style="display:flex;gap:10px;justify-content:center">
+        {% csrf_token %}
+        <button type="submit" class="btn-nx btn-danger-nx">Yes, Delete</button>
+        <a href="{% url 'product_list' %}" class="btn-nx btn-ghost">Cancel</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Delete Order — NexaShop{% endblock %}
+{% block content %}
+<div class="row justify-content-center mt-5">
+  <div class="col-md-6">
+    <div class="card-nx anim" style="text-align:center;padding:40px">
+      <div style="font-size:50px;margin-bottom:16px">🗑️</div>
+      <h2 style="font-family:Syne,sans-serif;font-weight:800;margin-bottom:8px">Delete Order?</h2>
+      <p style="color:var(--t2);margin-bottom:24px">
+        Are you sure you want to delete order 
+        <strong style="color:var(--accent)">{{ order.order_id }}</strong>
+        ? This cannot be undone.
+      </p>
+      <form method="post" style="display:flex;gap:10px;justify-content:center">
+        {% csrf_token %}
+        <button type="submit" class="btn-nx btn-danger-nx">Yes, Delete</button>
+        <a href="{% url 'order_list' %}" class="btn-nx btn-ghost">Cancel</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

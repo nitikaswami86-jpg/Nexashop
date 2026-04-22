@@ -1,0 +1,116 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>{% block title %}NexaShop Admin{% endblock %}</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+{% block extra_css %}{% endblock %}
+</head>
+<body>
+<aside class="sidebar" id="sidebar">
+  <div class="sb-logo">
+    <div class="brand">
+      Nexa
+      <span>Shop</span>
+    </div>
+    <small>Admin Panel v2.0</small>
+  </div>
+  <nav class="sb-nav">
+    <div class="nav-lbl">Main</div>
+    <a href="{% url 'dashboard' %}" class="nav-link {% if page == 'dashboard' %}active{% endif %}">
+      <i class="bi bi-grid-1x2-fill"></i>
+      Overview
+    </a>
+    <a href="{% url 'order_list' %}" class="nav-link {% if page == 'orders' %}active{% endif %}">
+      <i class="bi bi-bag-check-fill"></i>Orders
+      {% if pending_orders %}
+      <span class="nav-badge">{{ pending_orders }}</span>
+      {% endif %}
+    </a>
+    <a href="{% url 'product_list' %}" class="nav-link {% if page == 'products' %}active{% endif %}">
+      <i class="bi bi-box-seam-fill"></i>Products
+      {% if low_stock_products %}
+      <span class="nav-badge warn">{{ low_stock_products }}</span>
+      {% endif %}
+    </a>
+    <a href="{% url 'customer_list' %}" class="nav-link {% if page == 'customers' %}active{% endif %}">
+      <i class="bi bi-people-fill"></i>
+      Customers
+    </a>
+    <div class="nav-lbl">System</div>
+    <a href="/admin/" class="nav-link" target="_blank">
+      <i class="bi bi-shield-fill-check"></i>
+      Django Admin
+    </a>
+  </nav>
+  <div class="sb-footer">
+    <div class="user-row">
+      <div class="avatar">{{ request.user.username|first|upper }}</div>
+      <div>
+        <div style="font-weight:600;font-size:13px;color:var(--t1)">{{ request.user.username }}</div>
+        <div style="font-size:11px;color:var(--t3)">Administrator</div>
+      </div>
+      <a href="{% url 'logout' %}" class="ms-auto ib" title="Logout">
+        <i class="bi bi-box-arrow-right"></i>
+      </a>
+    </div>
+  </div>
+</aside>
+
+<div class="main">
+  <header class="topbar">
+    <button class="ib d-lg-none me-1" onclick="document.getElementById('sidebar').classList.toggle('open')">
+      <i class="bi bi-list"></i>
+    </button>
+    <form class="search-wrap" method="get">
+      <i class="bi bi-search"></i>
+      <input name="q" type="search" placeholder="Search…" value="{{ request.GET.q }}"/>
+    </form>
+    <div class="topbar-right">
+      <span style="font-size:12px;color:var(--t3);padding:0 8px" id="live-time"></span>
+      <a href="{% url 'order_create' %}" class="btn-nx btn-primary-nx" style="font-size:12px;padding:7px 14px">
+        <i class="bi bi-plus-lg"></i>
+        New Order
+      </a>
+    </div>
+  </header>
+
+  <main class="page-body">
+    {% if messages %}
+    <div class="mb-3">
+      {% for msg in messages %}
+      <div class="alert alert-{{ msg.tags }} alert-dismissible fade show" role="alert">
+        {{ msg }}
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function tick(){
+const n=new Date(),
+el=document.getElementById('live-time');
+if(el)el.textContent=n.toLocaleTimeString(
+'en-IN',
+{
+hour:'2-digit',
+minute:'2-digit',
+second:'2-digit'
+}
+)
+}
+tick();setInterval(tick,1000);
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

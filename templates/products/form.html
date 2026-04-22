@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}{{ action }} Product — NexaShop{% endblock %}
+{% block content %}
+<div class="page-hdr anim">
+  <div class="d-flex align-items-center gap-3">
+    <a href="{% url 'product_list' %}" class="ib"><i class="bi bi-arrow-left"></i></a>
+    <div><h1 class="page-title">{{ action }} Product</h1><p class="page-sub">{% if product %}Editing {{ product.name }}{% else %}Add a new product{% endif %}</p></div>
+  </div>
+</div>
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card-nx anim">
+      <div class="card-head"><div class="card-title">Product Information</div></div>
+      <div style="padding:28px">
+        <form method="post">
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label">Product Name</label>
+              {{ form.name }}
+              {% if form.name.errors %}<div style="font-size:12px;color:var(--pink);margin-top:5px">{{ form.name.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-md-8">
+              <label class="form-label">Category</label>{{ form.category }}
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Icon (emoji)</label>{{ form.icon }}
+            </div>
+            <div class="col-12">
+              <label class="form-label">Description</label>{{ form.description }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Price (&#8377;)</label>{{ form.price }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Stock</label>{{ form.stock }}
+            </div>
+            <div class="col-12">
+              <div class="form-check" style="display:flex;align-items:center;gap:10px;margin-top:4px">
+                {{ form.is_active }}
+                <label class="form-check-label" style="font-size:13px;color:var(--t1);text-transform:none;letter-spacing:0;font-weight:500">Product is active (visible to customers)</label>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:24px">
+            <button type="submit" class="btn-nx btn-primary-nx">{{ action }} Product</button>
+            <a href="{% url 'product_list' %}" class="btn-nx btn-ghost">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

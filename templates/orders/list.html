@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Orders — NexaShop{% endblock %}
+{% block content %}
+<div class="page-hdr anim">
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+    <div>
+      <h1 class="page-title">Orders</h1>
+      <p class="page-sub">Manage and track all customer orders</p>
+    </div>
+    <a href="{% url 'order_create' %}" class="btn-nx btn-primary-nx">
+      <i class="bi bi-plus-lg"></i>
+      New Order
+    </a>
+  </div>
+</div>
+
+<!-- STAT STRIP -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3 anim anim-d1"><div class="card-nx" style="padding:16px 18px">
+    <div style="font-size:11px;color:var(--t2);margin-bottom:4px">Total</div>
+    <div style="font-family:Syne,sans-serif;font-size:22px;font-weight:800">{{ total }}</div>
+  </div></div>
+  {% for key,val in counts.items %}
+  <div class="col-6 col-md-3 anim anim-d{{ forloop.counter }}">
+    <div class="card-nx" style="padding:16px 18px">
+    <div style="font-size:11px;color:var(--t2);margin-bottom:4px;text-transform:capitalize">{{ key }}</div>
+    <div style="font-family:Syne,sans-serif;font-size:22px;font-weight:800">
+      <span class="bx bx-{{ key }}">{{ val }}</span>
+    </div>
+  </div>
+</div>
+  {% endfor %}
+</div>
+
+<!-- FILTERS -->
+<div class="card-nx mb-4 anim">
+  <div style="padding:16px 18px">
+    <form method="get" class="d-flex flex-wrap gap-3 align-items-end">
+      <div style="flex:1;min-width:200px">
+        <label class="form-label">Search</label>
+        <input name="q" class="form-control" placeholder="Order ID, customer, product..." value="{{ q }}"/>
+      </div>
+      <div>
+        <label class="form-label">Status</label>
+        <select name="status" class="form-select" style="min-width:140px">
+          <option value="">All Statuses</option>
+          {% for val,lbl in status_choices %}
+          <option value="{{ val }}" {% if status == val %}selected{% endif %}>{{ lbl }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn-nx btn-primary-nx">Filter</button>
+        <a href="{% url 'order_list' %}" class="btn-nx btn-ghost">Clear</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- TABLE -->
+<div class="card-nx anim">
+  <div class="table-responsive">
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th>Order ID</th>
+          <th>Product</th>
+          <th>Customer</th>
+          <th>Qty</th>
+          <th>Amount</th>
+          <th>Status</th>
+          <th>Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for o in page_obj %}
+      <tr>
+        <td>
+          <a href="{% url 'order_detail' o.pk %}" style="font-family:monospace;color:var(--accent);font-size:12px;text-decoration:none">
+            {{ o.order_id }}
+          </a>
+        </td>
+        <td>
+          <div style="display:flex;align-items:center;gap:9px">
+            <div class="p-thumb">{{ o.product.icon }}</div>
+            <div>
+              <div style="font-weight:600;font-size:13px">{{ o.product.name|truncatechars:24 }}</div>
+              <div style="font-size:11px;color:var(--t3)">{{ o.product.category }}</div>
+            </div>
+          </div>
+        </td>
+        <td>
+          <div style="font-weight:500">{{ o.customer.name }}</div>
+          <div style="font-size:11px;color:var(--t3)">{{ o.customer.city }}</div>
+        </td>
+        <td style="color:var(--t2)">{{ o.quantity }}</td>
+        <td style="font-family:Syne,sans-serif;font-weight:700">&#8377;{{ o.amount|floatformat:0|intcomma }}</td>
+        <td><span class="bx bx-{{ o.status }}">{{ o.get_status_display }}</span></td>
+        <td style="color:var(--t3);font-size:12px">{{ o.created_at|date:"M d, Y" }}</td>
+        <td>
+          <div style="display:flex;gap:5px">
+            <a href="{% url 'order_detail' o.pk %}" class="ib" title="View">
+              <i class="bi bi-eye" style="font-size:13px"></i>
+            </a>
+            <a href="{% url 'order_edit' o.pk %}" class="ib" title="Edit">
+              <i class="bi bi-pencil" style="font-size:13px"></i>
+            </a>
+            <a href="{% url 'order_delete' o.pk %}" class="ib" title="Delete" style="color:var(--pink)">
+              <i class="bi bi-trash" style="font-size:13px"></i>
+            </a>
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="8" style="text-align:center;color:var(--t3);padding:40px">
+          No orders found
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if page_obj.has_other_pages %}
+  <div style="padding:16px 18px;border-top:1px solid var(--border)">
+    <nav>
+      <ul class="pagination pagination-sm mb-0">
+      {% if page_obj.has_previous %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ q }}&status={{ status }}">
+          Prev
+        </a>
+      </li>
+      {% endif %}
+      {% for num in page_obj.paginator.page_range %}
+      <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+        <a class="page-link" href="?page={{ num }}&q={{ q }}&status={{ status }}">
+          {{ num }}
+        </a>
+      </li>
+      {% endfor %}
+      {% if page_obj.has_next %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ q }}&status={{ status }}">
+          Next
+        </a>
+      </li>
+      {% endif %}
+    </ul>
+  </nav>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,348 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Dashboard — NexaShop{% endblock %}
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+{% block content %}
+<div class="page-hdr anim">
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+    <div>
+      <h1 class="page-title">Good day, {{ request.user.username|capfirst }} 👋</h1>
+      <p class="page-sub">Here is what is happening with your store today.</p>
+    </div>
+    <a href="{% url 'order_create' %}" class="btn-nx btn-primary-nx">
+      <i class="bi bi-plus-lg"></i>
+      New Order
+    </a>
+  </div>
+</div>
+
+<!-- KPI CARDS -->
+<div class="row g-3 mb-4">
+  <div class="col-xl-3 col-sm-6 anim anim-d1">
+    <div class="stat-c sc1">
+      <div class="stat-icon">
+        <i class="bi bi-currency-rupee"></i>
+      </div>
+      <div class="stat-val">&#8377;{{ rev_now|floatformat:0|intcomma }}</div>
+      <div class="stat-lbl">Revenue (30 days)</div>
+      <span class="trend {% if rev_change >= 0 %}t-up{% else %}t-dn{% endif %}">
+        <i class="bi bi-arrow-{% if rev_change >= 0 %}up{% else %}down{% endif %}-right"></i>
+        {{ rev_change }}%
+      </span>
+    </div>
+  </div>
+  <div class="col-xl-3 col-sm-6 anim anim-d2">
+    <div class="stat-c sc2">
+      <div class="stat-icon">
+        <i class="bi bi-bag-check"></i>
+      </div>
+      <div class="stat-val">{{ ord_now|intcomma }}</div>
+      <div class="stat-lbl">Orders (30 days)</div>
+      <span class="trend {% if ord_change >= 0 %}t-up{% else %}t-dn{% endif %}">
+        <i class="bi bi-arrow-{% if ord_change >= 0 %}up{% else %}down{% endif %}-right"></i>
+        {{ ord_change }}%
+      </span>
+    </div>
+  </div>
+  <div class="col-xl-3 col-sm-6 anim anim-d3">
+    <div class="stat-c sc3">
+      <div class="stat-icon">
+        <i class="bi bi-people"></i>
+      </div>
+      <div class="stat-val">{{ cust_now|intcomma }}</div>
+      <div class="stat-lbl">Total Customers</div>
+      <span class="trend t-up">
+        <i class="bi bi-arrow-up-right"></i>
+        +{{ new_cust }} new
+      </span>
+    </div>
+  </div>
+  <div class="col-xl-3 col-sm-6 anim anim-d4">
+    <div class="stat-c sc4">
+      <div class="stat-icon">
+        <i class="bi bi-graph-up-arrow"></i>
+      </div>
+      <div class="stat-val">{{ conv_rate }}%</div>
+      <div class="stat-lbl">Conversion Rate</div>
+      <span class="trend t-up">
+        <i class="bi bi-arrow-up-right"></i>
+        Completed orders
+      </span>
+    </div>
+  </div>
+</div>
+
+<!-- CHARTS ROW -->
+<div class="row g-3 mb-4">
+  <div class="col-xl-8 anim">
+    <div class="card-nx h-100">
+      <div class="card-head">
+        <div>
+          <div class="card-title">Revenue &amp; Orders — Last 12 Months</div>
+          <div style="font-size:11px;color:var(--t3);margin-top:2px">Monthly trend</div>
+        </div>
+        <div class="d-flex gap-3" style="font-size:12px;color:var(--t2)">
+          <span>
+            <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--accent);margin-right:5px"></span>
+            Revenue
+          </span>
+          <span>
+            <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--purple);margin-right:5px"></span>
+            Orders
+          </span>
+        </div>
+      </div>
+      <div style="padding:18px">
+        <canvas id="revenueChart" height="240"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-4 anim">
+    <div class="card-nx h-100">
+      <div class="card-head">
+        <div class="card-title">Sales by Category</div>
+      </div>
+      <div style="padding:18px;display:flex;justify-content:center">
+        <canvas id="donutChart" width="200" height="200"></canvas>
+      </div>
+      <div style="padding:0 18px 18px">
+        {% for lbl in cat_labels_json|default:"[]"|safe %}{% endfor %}
+        <div id="cat-legend" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ORDERS TABLE + TOP PRODUCTS -->
+<div class="row g-3 mb-4">
+  <div class="col-xl-8 anim">
+    <div class="card-nx">
+      <div class="card-head">
+        <div class="card-title">Recent Orders</div>
+        <a href="{% url 'order_list' %}" style="font-size:12px;color:var(--accent);text-decoration:none;font-weight:600">
+          View all &rarr;
+        </a>
+      </div>
+      <div class="table-responsive">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Product</th>
+              <th>Customer</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for o in recent_orders %}
+          <tr style="cursor:pointer" onclick="location.href='{% url 'order_detail' o.pk %}'">
+            <td>
+              <span style="font-family:monospace;color:var(--accent);font-size:12px">{{ o.order_id }}</span>
+            </td>
+            <td>
+              <div style="display:flex;align-items:center;gap:9px">
+                <div class="p-thumb">{{ o.product.icon }}</div>
+                <div>
+                  <div style="font-weight:600;font-size:13px">{{ o.product.name|truncatechars:22 }}</div>
+                  <div style="font-size:11px;color:var(--t3)">{{ o.product.category }}</div>
+                </div>
+              </div>
+            </td>
+            <td style="color:var(--t2)">{{ o.customer.name }}</td>
+            <td style="font-family:Syne,sans-serif;font-weight:700">&#8377;{{ o.amount|floatformat:0|intcomma }}</td>
+            <td>
+              <span class="bx bx-{{ o.status }}">{{ o.get_status_display }}</span>
+            </td>
+            <td style="color:var(--t3);font-size:12px">{{ o.created_at|date:"M d, Y" }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" style="text-align:center;color:var(--t3);padding:30px">No orders yet</td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-4 anim">
+    <div class="card-nx h-100">
+      <div class="card-head">
+        <div class="card-title">Top Products</div>
+        <a href="{% url 'product_list' %}" style="font-size:12px;color:var(--accent);text-decoration:none;font-weight:600">All</a>
+      </div>
+      {% for p in top_products %}
+      <div style="padding:13px 18px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);transition:background .2s" onmouseover="this.style.background='var(--hover)'" onmouseout="this.style.background=''">
+        <div style="font-family:Syne,sans-serif;font-size:16px;font-weight:800;color:var(--t3);min-width:24px">{{ forloop.counter }}</div>
+        <div class="p-thumb">{{ p.icon }}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+            {{ p.name }}
+          </div>
+          <div style="font-size:11px;color:var(--t3)">{{ p.sold }} units sold</div>
+          <div style="height:4px;background:var(--border);border-radius:99px;margin-top:6px;overflow:hidden">
+            <div style="height:100%;border-radius:99px;background:linear-gradient(90deg,var(--purple),var(--accent));width:{% widthratio p.sold max_sold 100 %}%"></div>
+          </div>
+        </div>
+        <div style="font-family:Syne,sans-serif;font-weight:700;font-size:13px;min-width:60px;text-align:right">&#8377;{{ p.revenue|floatformat:0|intcomma }}</div>
+      </div>
+      {% empty %}
+      <div style="padding:30px;text-align:center;color:var(--t3)">No data</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- ACTIVITY + QUICK STATS -->
+<div class="row g-3">
+  <div class="col-xl-6 anim">
+    <div class="card-nx">
+      <div class="card-head">
+        <div class="card-title">Activity Feed</div>
+        <span style="font-size:11px;color:var(--green)">&#9679; Live</span>
+      </div>
+      {% for a in activity %}
+      <div style="display:flex;align-items:flex-start;gap:13px;padding:13px 18px;border-bottom:1px solid var(--border)">
+        <div style="width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0;background:
+          {% if a.color == 'blue' %}var(--accent)
+          {% elif a.color == 'green' %}var(--green)
+          {% elif a.color == 'purple' %}var(--purple)
+          {% elif a.color == 'yellow' %}var(--yellow)
+          {% else %}var(--pink){% endif %}"></div>
+        <div>
+          <div style="font-size:13px;line-height:1.5">{{ a.message }}</div>
+          <div style="font-size:11px;color:var(--t3);margin-top:2px">{{ a.created_at|timesince }} ago</div>
+        </div>
+      </div>
+      {% empty %}
+      <div style="padding:30px;text-align:center;color:var(--t3)">No activity</div>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="col-xl-6 anim">
+    <div class="card-nx">
+      <div class="card-head"><div class="card-title">Weekly Orders</div></div>
+      <div style="padding:18px"><canvas id="sparkChart" height="140"></canvas></div>
+      <div style="border-top:1px solid var(--border)">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0">
+          <div style="padding:16px 20px;border-right:1px solid var(--border);border-bottom:1px solid var(--border)">
+            <div style="font-size:11px;color:var(--t2);margin-bottom:4px">Avg Order Value</div>
+            <div style="font-family:Syne,sans-serif;font-weight:700;font-size:18px;color:var(--accent)">&#8377;{{ avg_order|floatformat:0|intcomma }}</div>
+          </div>
+          <div style="padding:16px 20px;border-bottom:1px solid var(--border)">
+            <div style="font-size:11px;color:var(--t2);margin-bottom:4px">Pending Orders</div>
+            <div style="font-family:Syne,sans-serif;font-weight:700;font-size:18px;color:var(--yellow)">{{ pending_count }}</div>
+          </div>
+          <div style="padding:16px 20px;border-right:1px solid var(--border)">
+            <div style="font-size:11px;color:var(--t2);margin-bottom:4px">New Customers</div>
+            <div style="font-family:Syne,sans-serif;font-weight:700;font-size:18px;color:var(--green)">+{{ new_cust }}</div>
+          </div>
+          <div style="padding:16px 20px">
+            <div style="font-size:11px;color:var(--t2);margin-bottom:4px">Low Stock Products</div>
+            <div style="font-family:Syne,sans-serif;font-weight:700;font-size:18px;color:var(--pink)">{{ low_stock_count }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CD = Chart.defaults;
+CD.color='#8891a8';CD.borderColor='#1e2230';
+const months = {{ months_json|safe }};
+const revData = {{ rev_data_json|safe }};
+const ordData = {{ ord_data_json|safe }};
+const catLabels = {{ cat_labels_json|safe }};
+const catVals = {{ cat_vals_json|safe }};
+const wkLabels = {{ week_labels_json|safe }};
+const wkData = {{ week_data_json|safe }};
+const colors = ['#00e5ff','#7c4dff','#00e676','#ffab40','#ff4081'];
+
+// Revenue chart
+const ctx = document.getElementById('revenueChart').getContext('2d');
+const g1 = ctx.createLinearGradient(0,0,0,240);
+g1.addColorStop(0,'rgba(0,229,255,.2)');g1.addColorStop(1,'rgba(0,229,255,0)');
+const g2 = ctx.createLinearGradient(0,0,0,240);
+g2.addColorStop(0,'rgba(124,77,255,.15)');g2.addColorStop(1,'rgba(124,77,255,0)');
+new Chart(ctx,{type:'line',data:{labels:months,datasets:[
+  {label:'Revenue',data:revData,borderColor:'#00e5ff',backgroundColor:g1,borderWidth:2.5,tension:.4,fill:true,pointBackgroundColor:'#00e5ff',pointRadius:4,yAxisID:'y'},
+  {label:'Orders',data:ordData,borderColor:'#7c4dff',backgroundColor:g2,borderWidth:2,tension:.4,fill:true,pointBackgroundColor:'#7c4dff',pointRadius:3,borderDash:[5,4],yAxisID:'y1'}
+]},options:{responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false},tooltip:{backgroundColor:'#111318',borderColor:'#1e2230',borderWidth:1,padding:12}},
+  scales:{
+    x:{grid:{color:'rgba(30,34,48,.6)'},ticks:{font:{size:11}}},
+    y:{grid:{color:'rgba(30,34,48,.6)'},ticks:{font:{size:11},callback:v=>'₹'+v},position:'left'},
+    y1:{grid:{display:false},ticks:{font:{size:11}},position:'right'}
+  }
+}});
+
+// Donut
+new Chart(document.getElementById('donutChart'),{type:'doughnut',data:{
+  labels:catLabels,
+  datasets:[{data:catVals,backgroundColor:colors,borderWidth:0,hoverOffset:8}]
+},options:{cutout:'72%',plugins:{legend:{display:false},tooltip:{backgroundColor:'#111318',borderColor:'#1e2230',borderWidth:1}}}});
+
+// Legend
+const leg = document.getElementById('cat-legend');
+catLabels.forEach((l,i)=>{
+  leg.innerHTML+=`<div style="display:flex;
+  align-items:center;
+  justify-content:space-between;
+  font-size:12px;
+  color:var(--t2)">
+  <div style="display:flex;align-items:center;gap:7px">
+    <div style="width:9px;height:9px;border-radius:50%;background:${colors[i]};flex-shrink:0">
+      </div>
+      ${l}
+      </div>
+      <span style="font-weight:700;color:var(--t1)">${catVals[i]}</span>
+      </div>`;
+});
+
+// Spark
+new Chart(document.getElementById('sparkChart'),{type:'bar',data:{
+  labels:wkLabels,datasets:[
+  {
+    data:wkData,
+    backgroundColor:wkData.map((_,i)=>i>=5?'#00e5ff':'#1e2230'),
+    borderRadius:8
+  }
+]
+},options:{responsive:true,maintainAspectRatio:false,
+  plugins:{
+    legend:{
+      display:false
+    },
+    tooltip:{
+      backgroundColor:'#111318',
+    borderColor:'#1e2230',
+    borderWidth:1
+  }
+},
+  scales:{
+    x:{
+      grid:{
+        display:false
+      },
+      ticks:{
+        font:{
+          size:11
+        }
+      }
+    },
+    y:{
+      display:false
+    }
+  }
+}
+}
+);
+</script>
+{% endblock %}

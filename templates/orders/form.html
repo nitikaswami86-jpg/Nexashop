@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}{{ action }} Order — NexaShop{% endblock %}
+{% block content %}
+<div class="page-hdr anim">
+  <div class="d-flex align-items-center gap-3">
+    <a href="{% url 'order_list' %}" class="ib"><i class="bi bi-arrow-left"></i></a>
+    <div>
+      <h1 class="page-title">{{ action }} Order</h1>
+      <p class="page-sub">
+        {% if order %}Editing {{ order.order_id }}{% else %}Create a new order{% endif %}
+      </p>
+    </div>
+  </div>
+</div>
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card-nx anim">
+      <div class="card-head"><div class="card-title">Order Details</div></div>
+      <div style="padding:28px">
+        <form method="post">
+          {% csrf_token %}
+          {% for field in form %}
+          <div style="margin-bottom:20px">
+            <label class="form-label">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+            <div style="font-size:12px;color:var(--pink);margin-top:5px">
+              {{ field.errors.0 }}
+            </div>
+            {% endif %}
+          </div>
+          {% endfor %}
+          <div style="display:flex;gap:10px;margin-top:8px">
+            <button type="submit" class="btn-nx btn-primary-nx">{{ action }} Order</button>
+            <a href="{% url 'order_list' %}" class="btn-nx btn-ghost">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
